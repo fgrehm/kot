@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -e
+
+mkdir -p ~/.kube
+while true; do
+  if [[ -f "${K3S_KUBECONFIG_SRC}" ]]; then
+    break
+  fi
+
+  echo "Waiting for kubeconfig at ${K3S_KUBECONFIG_SRC}" >&2
+  sleep 1
+done
+
+sed -e "s|127.0.0.1|${K3S_SERVER_NAME}|" "${K3S_KUBECONFIG_SRC}" > ~/.kube/config
+exec $@

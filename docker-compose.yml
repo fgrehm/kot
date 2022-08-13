@@ -1,0 +1,75 @@
+version: "3.8"
+services:
+  k3s:
+    image: "rancher/k3s:v1.24.3-k3s1"
+    tmpfs:
+    - /run
+    - /var/run
+    privileged: true
+    volumes:
+    - .:/workspace
+    - k3s:/var/lib/rancher/k3s
+    environment:
+    - K3S_KUBECONFIG_MODE=666
+    - K3S_KUBECONFIG_OUTPUT=/workspace/tmp/kubeconfig.yaml
+    - REGISTRY_NAME=registry.kot-system.svc.cluster.local
+    - REGISTRY_PORT=5000
+    depends_on:
+    - 'registry'
+    links:
+    - 'registry:registry.kot-system.svc.cluster.local'
+    ports:
+    - "6443:6443"
+    - "8080:80"
+    entrypoint:
+    - "sh"
+    - "-c"
+    command:
+    - |
+      set -ex
+      mkdir -p /etc/rancher/k3s
+      cat <<-STR > /etc/rancher/k3s/registries.yaml
+      mirrors:
+        "$${REGISTRY_NAME}:$${REGISTRY_PORT}":
+          endpoint:
+            - http://$${REGISTRY_NAME}:$${REGISTRY_PORT}
+      STR
+      cat /etc/rancher/k3s/registries.yaml
+      exec k3s server --node-name k3s
+
+  registry:
+    image: "registry:2"
+    ports:
+    - "5000:5000"
+    volumes:
+    - registry:/var/lib/registry
+    environment:
+    - REGISTRY_STORAGE_DELETE_ENABLED=true
+    #  https://docs.docker.com/registry/configuration/#silly
+    - REGISTRY_AUTH_SILLY_REALM=silly-testing
+    - REGISTRY_AUTH_SILLY_SERVICE=silly-service
+
+  dev:
+    image: "kot:dev"
+    command: "exec tail -f /dev/null"
+    build:
+      context: '.'
+      dockerfile: 'Dockerfile.dev'
+    depends_on:
+    - 'k3s'
+    links:
+    - 'k3s'
+    volumes:
+    - gopath:/go
+    - .:/workspace
+    environment:
+    - K3S_SERVER_NAME=k3s
+    - K3S_KUBECONFIG_SRC=/workspace/tmp/kubeconfig.yaml
+    - CONTROLLER_GEN=/usr/local/bin/controller-gen
+    - KUSTOMIZE=/usr/local/bin/kustomize
+    - ENVTEST=/usr/local/bin/setup-envtest
+
+volumes:
+  gopath: {}
+  k3s: {}
+  registry: {}

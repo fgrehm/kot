@@ -1,0 +1,36 @@
+FROM golang:1.18-alpine3.15
+
+RUN apk add --no-cache bash make git gcc g++ \
+    && git config --global --add safe.directory /workspace
+
+ENV KUSTOMIZE_VERSION=v4.5.7 \
+    CONTROLLER_TOOLS_VERSION=v0.9.2 \
+    K8S_VERSION=v1.24.3
+
+RUN wget -O /usr/local/bin/kubectl \
+            https://dl.k8s.io/release/${K8S_VERSION}/bin/linux/amd64/kubectl \
+    && chmod +x /usr/local/bin/kubectl
+
+RUN wget -O kubebuilder https://github.com/kubernetes-sigs/kubebuilder/releases/download/v3.6.0/kubebuilder_$(go env GOOS)_$(go env GOARCH) \
+    && chmod +x kubebuilder \
+    && mv kubebuilder /usr/local/bin/kubebuilder
+
+RUN go install github.com/cespare/reflex@v0.3.1 \
+    && go install sigs.k8s.io/controller-tools/cmd/controller-gen@${CONTROLLER_TOOLS_VERSION} \
+    && go install github.com/golang/mock/mockgen@latest \
+    && go install github.com/onsi/ginkgo/v2/ginkgo@latest \
+    && go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest \
+    && mv /go/bin/reflex /usr/local/bin/reflex \
+    && mv /go/bin/controller-gen /usr/local/bin/controller-gen \
+    && mv /go/bin/mockgen /usr/local/bin/mockgen \
+    && mv /go/bin/ginkgo /usr/local/bin/ginkgo \
+    && mv /go/bin/setup-envtest /usr/local/bin/setup-envtest \
+    && rm -rf /go/*
+
+RUN apk add --no-cache bash curl \
+    && curl -fsSL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_$(go env GOOS)_$(go env GOARCH).tar.gz" \
+      | tar -zxv -C /usr/local/bin
+
+ADD hack/dev/* /usr/local/bin/
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
+WORKDIR /workspace
