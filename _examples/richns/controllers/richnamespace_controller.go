@@ -17,46 +17,110 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
-
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
+	"github.com/fgrehm/kot"
 	richnsv1 "github.com/fgrehm/kot/richns/api/v1"
+	corev1 "k8s.io/api/core/v1"
 )
-
-// RichNamespaceReconciler reconciles a RichNamespace object
-type RichNamespaceReconciler struct {
-	client.Client
-	Scheme *runtime.Scheme
-}
 
 //+kubebuilder:rbac:groups=richns.examples.kot,resources=richnamespaces,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=richns.examples.kot,resources=richnamespaces/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=richns.examples.kot,resources=richnamespaces/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the RichNamespace object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.2/pkg/reconcile
-func (r *RichNamespaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+var nsReconciler = kot.Reconcile(&kot.One{
+	GVK: corev1.SchemeGroupVersion.WithKind("Namespace"),
 
-	// TODO(user): your logic here
+	Reconcile: kot.SimpleReconcileOne(func(ctx kot.Context, child kot.Object) {
+		rns := ctx.Resource().(*richnsv1.RichNamespace)
+		ns := child.(*corev1.Namespace)
 
-	return ctrl.Result{}, nil
-}
+		ns.Name = rns.Name
+	}),
+})
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *RichNamespaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&richnsv1.RichNamespace{}).
-		Complete(r)
+var limitsReconciler = kot.Reconcile(&kot.One{
+	GVK: corev1.SchemeGroupVersion.WithKind("LimitRange"),
+
+	If: kot.SimpleIf(func(ctx kot.Context) bool {
+		rns := ctx.Resource().(*richnsv1.RichNamespace)
+		return rns.Spec.DefaultResources != nil
+	}),
+
+	Reconcile: kot.SimpleReconcileOne(func(ctx kot.Context, child kot.Object) {
+		rns := ctx.Resource().(*richnsv1.RichNamespace)
+		lr := child.(*corev1.LimitRange)
+
+		lr.Name = "container-defaults"
+		lr.Namespace = rns.Name
+		lr.Spec.Limits = []corev1.LimitRangeItem{}
+
+		defaultRequest := corev1.ResourceList{}
+		if req := rns.Spec.DefaultResources.Request; req != nil {
+			if req.CPU != nil {
+				defaultRequest[corev1.ResourceCPU] = *req.CPU
+			}
+			if req.Memory != nil {
+				defaultRequest[corev1.ResourceMemory] = *req.Memory
+			}
+		}
+
+		defaultLimit := corev1.ResourceList{}
+		if limit := rns.Spec.DefaultResources.Limit; limit != nil {
+			if limit.CPU != nil {
+				defaultLimit[corev1.ResourceCPU] = *limit.CPU
+			}
+			if limit.Memory != nil {
+				defaultLimit[corev1.ResourceMemory] = *limit.Memory
+			}
+		}
+
+		lr.Spec.Limits = []corev1.LimitRangeItem{{
+			Type:           corev1.LimitTypeContainer,
+			DefaultRequest: defaultRequest,
+			Default:        defaultLimit,
+		}}
+	}),
+})
+
+var secretsReconciler = kot.Reconcile(&kot.List{
+	GVK: corev1.SchemeGroupVersion.WithKind("Secret"),
+
+	// If: kot.SimpleIf(func(ctx kot.Context) bool {
+	// 	rns := ctx.Resource().(*richnsv1.RichNamespace)
+	// 	return rns.Spec.DefaultResources != nil
+	// }),
+
+	Reconcile: func(ctx kot.Context, children kot.ObjectList) (kot.Result, error) {
+		// rns := ctx.Resource().(*richnsv1.RichNamespace)
+		// secrets := children.(*corev1.SecretList)
+
+		// Index list by name
+
+		// For image pull, copy from another NS, accept reference to obj (ex: some-ns/nexus-creds)
+
+		// Set object list afterwards with the values of the secrets map
+		return kot.Result{}, nil
+	},
+})
+
+var statusResolver = kot.SimpleAction(func(ctx kot.Context) {
+	// rns := ctx.Resource().(*testapi.RichNamespace)
+	// rns.Status.Foo = ...
+
+	// TODO: - Copy phase from ns resource
+	//       - If pull secret can't be found, set some condition to false
+})
+
+var RichNamespaceController = &kot.Controller{
+	GVK: richnsv1.GroupVersion.WithKind("RichNamespace"),
+
+	Reconcilers: kot.Reconcilers{
+		nsReconciler,
+		limitsReconciler,
+		secretsReconciler,
+		// saReconciler, // configure default SA with image pull secrets
+	},
+
+	StatusResolvers: kot.StatusResolvers{
+		statusResolver,
+	},
 }
