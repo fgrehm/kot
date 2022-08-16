@@ -37,7 +37,15 @@ var _ = Describe("Custom children reconciliation", func() {
 		testctrls.Counter.Reset()
 	})
 
+	AfterEach(func() {
+		client.Delete(ctx, owner)
+	})
+
 	It("runs action", func() {
+		Eventually(func() int {
+			return testctrls.Counter.Value()
+		}).Should(Equal(0))
+
 		Expect(client.CreateAndWait(ctx, owner)).To(Succeed())
 
 		Eventually(func() int {
@@ -48,8 +56,11 @@ var _ = Describe("Custom children reconciliation", func() {
 			if err := client.Reload(ctx, owner); err != nil {
 				return err
 			}
-			owner.Spec.ConfigMapValue = strPtr("changed")
-			return client.Update(ctx, owner)
+			if *owner.Spec.ConfigMapValue != "changed" {
+				owner.Spec.ConfigMapValue = strPtr("changed")
+				return client.Update(ctx, owner)
+			}
+			return nil
 		}).Should(Succeed())
 
 		Eventually(func() int {

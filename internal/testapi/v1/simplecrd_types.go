@@ -28,6 +28,7 @@ type SimpleCRDStatus struct {
 	ReferencedValue     *string `json:"referencedValue"`
 	KnownConfigMapValue *string `json:"knownConfigMapValue"`
 	KnownSecretValue    *string `json:"knownSecretValue"`
+	NamespaceAnnotation string  `json:"namespaceAnnotation"`
 }
 
 type SimpleCRDList struct {

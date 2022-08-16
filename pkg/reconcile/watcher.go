@@ -37,6 +37,7 @@ func (w *ResourceWatcher) Handler() runtimehandler.EventHandler {
 		} else {
 			return reqs
 		}
+		return reqs
 	})
 }
 
@@ -45,8 +46,8 @@ func (w *ResourceWatcher) Predicate() runtimepredicate.Predicate {
 }
 
 func (w *ResourceWatcher) InjectDeps(ctn deps.Container) {
-	// set logger here? not set on deps ctn yet
 	w.ctn = ctn
+	// TODO: Inject logger too
 }
 
 var _ Watcher = &ResourceWatcher{}

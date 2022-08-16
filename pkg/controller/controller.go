@@ -123,6 +123,7 @@ func (c *Controller) buildFinalizersAction() action.Action {
 func (c *Controller) buildReconcilersAction() action.Action {
 	recActions := []action.Action{}
 	for _, reconciler := range c.Reconcilers {
+		// TODO: Move to factory
 		deps.SafeInject(c.Deps, reconciler)
 		recActions = append(recActions, reconciler)
 	}
@@ -153,6 +154,7 @@ func (c *Controller) Complete(ctn deps.Container) error {
 	}
 
 	for _, w := range c.Watchers {
+		deps.SafeInject(c.Deps, w)
 		runtimeCtrl = runtimeCtrl.Watches(
 			w.Source(),
 			w.Handler(),

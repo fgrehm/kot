@@ -37,6 +37,10 @@ var _ = Describe("Controller status resolution", func() {
 		}
 	})
 
+	AfterEach(func() {
+		client.Delete(ctx, owner)
+	})
+
 	It("updates status if necessary", func() {
 		Expect(client.CreateAndWait(ctx, owner)).To(Succeed())
 		Eventually(func() (string, error) {

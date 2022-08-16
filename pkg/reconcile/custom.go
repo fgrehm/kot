@@ -23,6 +23,7 @@ func (r *CustomReconciler) Run(originalCtx action.Context) (action.Result, error
 	}
 
 	ctx := originalCtx.WithLoggerValues("reconciler", r.Name)
+	ctx.Logger().Info("reconciling")
 	return r.Reconcile(ctx)
 }
 

@@ -52,4 +52,6 @@ var _ = Describe("CreateReconciler", func() {
 		Expect(err).To(HaveOccurred())
 		Expect(rec).To(BeNil())
 	})
+
+	// TODO: Test dependency injection
 })

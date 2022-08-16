@@ -52,6 +52,8 @@ spec:
                 type: string
               knownSecretValue:
                 type: string
+              namespaceAnnotation:
+                type: string
             type: object
         type: object
 

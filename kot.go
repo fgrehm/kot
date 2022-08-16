@@ -4,7 +4,9 @@ import (
 	"github.com/fgrehm/kot/pkg/action"
 	"github.com/fgrehm/kot/pkg/controller"
 	"github.com/fgrehm/kot/pkg/deps"
+	wkdeps "github.com/fgrehm/kot/pkg/deps/wellknown"
 	"github.com/fgrehm/kot/pkg/indexing"
+	"github.com/fgrehm/kot/pkg/kotclient"
 	"github.com/fgrehm/kot/pkg/reconcile"
 	"github.com/fgrehm/kot/pkg/setup"
 	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -48,6 +50,8 @@ type Finalizers = []reconcile.Finalizer
 type Object = runtimeclient.Object
 type ObjectList = runtimeclient.ObjectList
 
+type ClientKey = kotclient.Key
+
 var (
 	Watch                = reconcile.MustCreateWatcher
 	Reconcile            = reconcile.MustCreateReconciler
@@ -58,6 +62,10 @@ var (
 	NewPredicateFuncs = runtimepredicate.NewPredicateFuncs
 	AndPredicate      = runtimepredicate.And
 	OrPredicate       = runtimepredicate.Or
+
+	InNamespace = kotclient.InNamespace
+
+	ClientDep = wkdeps.Client
 )
 
 func HasAnnotation(obj Object, name string) bool {

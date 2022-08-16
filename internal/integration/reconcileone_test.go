@@ -35,6 +35,10 @@ var _ = Describe("Single child reconciliation", func() {
 		}
 	})
 
+	AfterEach(func() {
+		client.Delete(ctx, owner)
+	})
+
 	It("reconciles child objects", func() {
 		Expect(client.CreateAndWait(ctx, owner)).To(Succeed())
 

@@ -1,9 +1,9 @@
 package testctrls
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/fgrehm/kot"
@@ -17,19 +17,29 @@ var nsWatcher = kot.Watch(&kot.ResourceWatcher{
 	Watches: &corev1.Namespace{},
 	When:    kot.ResourceVersionChangedPredicate{},
 	Enqueue: func(ctn kot.Container, obj kot.Object) ([]kot.ReconcileRequest, error) {
-		panic("TODO")
+		client := kot.ClientDep(ctn)
+		list := &testapi.SimpleCRDList{}
+
+		ctx := context.Background()
+		ns := obj.(*corev1.Namespace)
+		println(ns.Name)
+		if err := client.List(ctx, list, kot.InNamespace(ns.Name)); err != nil {
+			return nil, err
+		}
+
+		reqs := make([]kot.ReconcileRequest, len(list.Items))
+		for i, item := range list.Items {
+			println("reconcile", item.Name)
+			reqs[i].Name = item.Name
+			reqs[i].Namespace = item.Namespace
+		}
+		return reqs, nil
 	},
 })
 
-// Reconcile a single child
 var cmReconciler = kot.Reconcile(&kot.One{
-	// Type of the child object
 	GVK: corev1.SchemeGroupVersion.WithKind("ConfigMap"),
 
-	// Wait for removal of the child obj when deleting the parent resource
-	// WaitForRemoval: true,
-
-	// Follow this "recipe" to reconcile the child
 	Reconcile: func(ctx kot.Context, child kot.Object) (kot.Result, error) {
 		simpleCRD := ctx.Resource().(*testapi.SimpleCRD)
 		cm := child.(*corev1.ConfigMap)
@@ -54,18 +64,14 @@ var cmReconciler = kot.Reconcile(&kot.One{
 })
 
 var saReconciler = kot.Reconcile(&kot.One{
-	// Type of the child object
 	GVK: corev1.SchemeGroupVersion.WithKind("ServiceAccount"),
 
-	// Wait for removal of the child obj when deleting the parent resource
-	// WaitForRemoval: true,
 	If: kot.SimpleIf(func(ctx kot.Context) bool {
 		simpleCRD := ctx.Resource().(*testapi.SimpleCRD)
 		cmVal := simpleCRD.Spec.ConfigMapValue
 		return cmVal == nil || *cmVal != "skip-sa"
 	}),
 
-	// Follow this "recipe" to reconcile the child
 	Reconcile: kot.SimpleReconcileOne(func(ctx kot.Context, child kot.Object) {
 		simpleCRD := ctx.Resource().(*testapi.SimpleCRD)
 		sa := child.(*corev1.ServiceAccount)
@@ -75,11 +81,9 @@ var saReconciler = kot.Reconcile(&kot.One{
 	}),
 })
 
-// Reconcile a list of child resources, configs are the same as the single child reconciler
 var secretsReconciler = kot.Reconcile(&kot.List{
 	GVK: corev1.SchemeGroupVersion.WithKind("Secret"),
 
-	// The difference here is that the Reconcile func gets a list instead of single obj
 	Reconcile: kot.SimpleReconcileList(func(ctx kot.Context, list kot.ObjectList) {
 		simpleCRD := ctx.Resource().(*testapi.SimpleCRD)
 		secrets := list.(*corev1.SecretList)
@@ -95,44 +99,6 @@ var secretsReconciler = kot.Reconcile(&kot.List{
 		secrets.Items = append(secrets.Items, *secret)
 	}),
 })
-
-type SafeCounter interface {
-	Value() int
-	Increment()
-	Decrement()
-	Reset()
-}
-
-type atomicCounter struct {
-	mu    sync.Mutex
-	value int
-}
-
-var Counter SafeCounter = &atomicCounter{}
-
-func (c *atomicCounter) Increment() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.value++
-}
-
-func (c *atomicCounter) Decrement() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.value--
-}
-
-func (c *atomicCounter) Reset() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.value = 0
-}
-
-func (c *atomicCounter) Value() int {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.value
-}
 
 var countReconciler = kot.Reconcile(&kot.Custom{
 	Name: "count-changes",
@@ -153,12 +119,24 @@ var countReconciler = kot.Reconcile(&kot.Custom{
 	}),
 })
 
-var statusResolver = kot.SimpleAction(func(ctx kot.Context) {
+var statusResolver = kot.ActionFn(func(ctx kot.Context) (kot.Result, error) {
 	simpleCRD := ctx.Resource().(*testapi.SimpleCRD)
 
 	simpleCRD.Status.StaticValue = &StaticValue
 	simpleCRD.Status.KnownConfigMapValue = simpleCRD.Spec.ConfigMapValue
 	simpleCRD.Status.KnownSecretValue = simpleCRD.Spec.SecretValue
+
+	client := kot.ClientDep(ctx)
+	ns := &corev1.Namespace{}
+	if err := client.Get(ctx, kot.ClientKey{Name: simpleCRD.Namespace}, ns); err != nil {
+		return kot.Result{}, err
+	}
+
+	simpleCRD.Status.NamespaceAnnotation = ""
+	if ns.Annotations != nil {
+		simpleCRD.Status.NamespaceAnnotation = ns.Annotations["misc"]
+	}
+	return kot.Result{}, nil
 })
 
 var delayFinalizer = &kot.SimpleFinalizer{

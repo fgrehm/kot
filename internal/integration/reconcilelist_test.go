@@ -38,6 +38,10 @@ var _ = Describe("List reconciliation", func() {
 		}
 	})
 
+	AfterEach(func() {
+		client.Delete(ctx, owner)
+	})
+
 	It("creates children resources", func() {
 		Expect(client.CreateAndWait(ctx, owner)).To(Succeed())
 

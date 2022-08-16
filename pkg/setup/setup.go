@@ -14,6 +14,7 @@ type Config struct {
 	Ctx         context.Context
 	Manager     ctrl.Manager
 	Controllers []*controller.Controller
+	// TODO: Indexers and scheme builders
 }
 
 func Run(cfg Config) {

@@ -283,4 +283,6 @@ var _ = Describe("Controller", func() {
 			})
 		})
 	})
+
+	// TODO: Test if watchers have deps injected and are registered with manager
 })
