@@ -51,7 +51,7 @@ services:
 
   dev:
     image: "kot:dev"
-    command: "exec tail -f /dev/null"
+    command: "tail -f /dev/null"
     build:
       context: '.'
       dockerfile: 'Dockerfile.dev'

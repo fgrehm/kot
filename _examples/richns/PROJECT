@@ -2,5 +2,15 @@ domain: examples.kot
 layout:
 - go.kubebuilder.io/v3
 projectName: richns
-repo: github.com/fgrehm/kot
+repo: github.com/fgrehm/kot/richns
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: examples.kot
+  group: richns
+  kind: RichNamespace
+  path: github.com/fgrehm/kot/richns/api/v1
+  version: v1
 version: "3"

@@ -1,0 +1,15 @@
+apiVersion: richns.examples.kot/v1
+kind: RichNamespace
+metadata:
+  name: richnamespace-sample
+spec:
+  # imagePullSecretsRef:
+  #   namespace: ""
+  #   name: ""
+  defaultResources:
+    request:
+      cpu: "500m"
+      memory: "512Mi"
+    limit:
+      cpu: "1"
+      memory: "512Mi"
