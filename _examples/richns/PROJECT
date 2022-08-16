@@ -1,0 +1,6 @@
+domain: examples.kot
+layout:
+- go.kubebuilder.io/v3
+projectName: richns
+repo: github.com/fgrehm/kot
+version: "3"
