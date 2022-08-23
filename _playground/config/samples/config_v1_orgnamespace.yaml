@@ -1,0 +1,6 @@
+apiVersion: config.playground.kot/v1
+kind: OrgNamespace
+metadata:
+  name: orgnamespace-sample
+spec:
+  # TODO(user): Add fields here

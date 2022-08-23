@@ -1,0 +1,20 @@
+# permissions for end users to view orgnamespaces.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: orgnamespace-viewer-role
+rules:
+- apiGroups:
+  - config.playground.kot
+  resources:
+  - orgnamespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - config.playground.kot
+  resources:
+  - orgnamespaces/status
+  verbs:
+  - get

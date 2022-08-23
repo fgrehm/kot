@@ -1,0 +1,17 @@
+componentConfig: true
+domain: playground.kot
+layout:
+- go.kubebuilder.io/v3
+projectName: playground
+repo: github.com/fgrehm/kot/playground
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: playground.kot
+  group: config
+  kind: OrgNamespace
+  path: github.com/fgrehm/kot/playground/api/v1
+  version: v1
+version: "3"

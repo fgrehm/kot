@@ -1,0 +1,24 @@
+# permissions for end users to edit orgnamespaces.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: orgnamespace-editor-role
+rules:
+- apiGroups:
+  - config.playground.kot
+  resources:
+  - orgnamespaces
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - config.playground.kot
+  resources:
+  - orgnamespaces/status
+  verbs:
+  - get
