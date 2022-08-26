@@ -3,10 +3,11 @@ kind: OrgNamespace
 metadata:
   name: orgnamespace-sample
 spec:
-  # importSecrets:
-  # - name: ""
-  #   namespace: ""
-  #   pullCreds: true
+  importSecrets:
+  # Create with `kubectl create secret generic shared-env -n default --from-literal=PLATFORM=kot`
+  - name: "shared-env"
+    namespace: "default"
+    pullCreds: false
   defaultResources:
     request:
       cpu: "500m"

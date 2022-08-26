@@ -83,6 +83,9 @@ func main() {
 	kot.Setup(kot.Config{
 		Ctx:     context.Background(),
 		Manager: mgr,
+		Indexers: []kot.Indexer{
+			controllers.IndexByImportedSecret,
+		},
 		Controllers: []*kot.Controller{
 			controllers.OrgNamespaceController,
 		},

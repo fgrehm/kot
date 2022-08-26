@@ -51,12 +51,14 @@ type Object = runtimeclient.Object
 type ObjectList = runtimeclient.ObjectList
 
 type ClientKey = kotclient.Key
+type MatchingFields = kotclient.MatchingFields
+
+type Indexer = indexing.Indexer
 
 var (
 	Watch     = reconcile.MustCreateWatcher
 	Reconcile = reconcile.MustCreateReconciler
 
-	MustIndexControllers = indexing.MustIndexControllers
 	ListChildrenOption   = indexing.ListChildrenOption
 
 	Setup = setup.Run
