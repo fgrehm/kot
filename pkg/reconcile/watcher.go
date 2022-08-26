@@ -34,8 +34,6 @@ func (w *ResourceWatcher) Handler() runtimehandler.EventHandler {
 		reqs, err := w.Enqueue(w.ctn, obj)
 		if err != nil {
 			return []runtimereconcile.Request{}
-		} else {
-			return reqs
 		}
 		return reqs
 	})

@@ -14,9 +14,11 @@ type StatusUpdater struct {
 }
 
 func (r *StatusUpdater) Run(ctx action.Context) (action.Result, error) {
+	log := ctx.Logger()
 	parent := ctx.Resource()
 	finalResult := action.Result{}
 
+	log.Info("resolving status")
 	if err := r.client.Reload(ctx, parent); err != nil {
 		return finalResult, err
 	}
@@ -37,6 +39,7 @@ func (r *StatusUpdater) Run(ctx action.Context) (action.Result, error) {
 	}
 
 	if !equality.Semantic.DeepEqual(statusBefore, statusAfter) {
+		log.Info("status changed, updating")
 		if err := r.client.UpdateStatus(ctx, parent); err != nil {
 			return finalResult, err
 		}
