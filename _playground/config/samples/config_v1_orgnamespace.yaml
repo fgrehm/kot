@@ -3,4 +3,14 @@ kind: OrgNamespace
 metadata:
   name: orgnamespace-sample
 spec:
-  # TODO(user): Add fields here
+  # importSecrets:
+  # - name: ""
+  #   namespace: ""
+  #   pullCreds: true
+  defaultResources:
+    request:
+      cpu: "500m"
+      memory: "512Mi"
+    limit:
+      cpu: "1"
+      memory: "512Mi"

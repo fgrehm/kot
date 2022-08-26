@@ -53,11 +53,15 @@ type ObjectList = runtimeclient.ObjectList
 type ClientKey = kotclient.Key
 
 var (
-	Watch                = reconcile.MustCreateWatcher
-	Reconcile            = reconcile.MustCreateReconciler
+	Watch     = reconcile.MustCreateWatcher
+	Reconcile = reconcile.MustCreateReconciler
+
 	MustIndexControllers = indexing.MustIndexControllers
-	Setup                = setup.Run
-	GVKForObject         = apiutil.GVKForObject
+	ListChildrenOption   = indexing.ListChildrenOption
+
+	Setup = setup.Run
+
+	GVKForObject = apiutil.GVKForObject
 
 	NewPredicateFuncs = runtimepredicate.NewPredicateFuncs
 	AndPredicate      = runtimepredicate.And
@@ -79,6 +83,41 @@ func GetAnnotation(obj Object, name string) string {
 	}
 	value, _ := annotations[name]
 	return value
+}
+
+func CopyLabels(src, dest Object) {
+	srcLabels := src.GetLabels()
+	if srcLabels == nil || len(srcLabels) == 0 {
+		return
+	}
+
+	destLabels := dest.GetLabels()
+	if destLabels == nil {
+		destLabels = map[string]string{}
+	}
+	for k, v := range srcLabels {
+		destLabels[k] = v
+	}
+	dest.SetLabels(destLabels)
+}
+
+func CopyAnnotations(src, dest Object) {
+	srcAnnotations := src.GetAnnotations()
+	if srcAnnotations == nil || len(srcAnnotations) == 0 {
+		return
+	}
+
+	destAnnotations := dest.GetAnnotations()
+	if destAnnotations == nil {
+		destAnnotations = map[string]string{}
+	}
+	for k, v := range srcAnnotations {
+		if k == "kubectl.kubernetes.io/last-applied-configuration" {
+			continue
+		}
+		destAnnotations[k] = v
+	}
+	dest.SetAnnotations(destAnnotations)
 }
 
 func SimpleAction(fn func(Context)) ActionFn {

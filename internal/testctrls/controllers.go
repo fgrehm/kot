@@ -22,14 +22,12 @@ var nsWatcher = kot.Watch(&kot.ResourceWatcher{
 
 		ctx := context.Background()
 		ns := obj.(*corev1.Namespace)
-		println(ns.Name)
 		if err := client.List(ctx, list, kot.InNamespace(ns.Name)); err != nil {
 			return nil, err
 		}
 
 		reqs := make([]kot.ReconcileRequest, len(list.Items))
 		for i, item := range list.Items {
-			println("reconcile", item.Name)
 			reqs[i].Name = item.Name
 			reqs[i].Namespace = item.Namespace
 		}

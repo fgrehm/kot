@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
+	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 	testapi "github.com/fgrehm/kot/internal/testapi/v1"
 	"github.com/fgrehm/kot/internal/testctrls"
 	"github.com/fgrehm/kot/pkg/indexing"
@@ -37,6 +39,41 @@ var _ = BeforeSuite(func() {
 
 	mgr := testEnv.Manager
 	indexing.MustIndexControllers(context.Background(), mgr, testctrls.SimpleCRDController)
+
+	indexers := []indexing.Indexer{
+		{
+			GVK: corev1.SchemeGroupVersion.WithKind("ConfigMap"),
+			Field: ".idx.name",
+			IndexFn: func(resource runtimeclient.Object) []string {
+				cm, ok := resource.(*corev1.ConfigMap)
+				if !ok {
+					return nil
+				}
+				name, ok := cm.Data["name"]
+				if !ok {
+					return nil
+				}
+				return []string{name}
+			},
+		},
+		{
+			GVK: corev1.SchemeGroupVersion.WithKind("ConfigMap"),
+			Field: ".idx.lastName",
+			IndexFn: func(resource runtimeclient.Object) []string {
+				cm, ok := resource.(*corev1.ConfigMap)
+				if !ok {
+					return nil
+				}
+				lastName, ok := cm.Data["lastName"]
+				if !ok {
+					return nil
+				}
+				return []string{lastName}
+			},
+		},
+	}
+
+	indexing.MustIndexAll(context.Background(), mgr, indexers...)
 
 	go func() {
 		defer GinkgoRecover() // Because of the Expect below

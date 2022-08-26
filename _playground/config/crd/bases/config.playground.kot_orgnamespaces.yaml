@@ -12,10 +12,19 @@ spec:
     kind: OrgNamespace
     listKind: OrgNamespaceList
     plural: orgnamespaces
+    shortNames:
+    - orgns
     singular: orgnamespace
-  scope: Namespaced
+  scope: Cluster
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
         description: OrgNamespace is the Schema for the orgnamespaces API
@@ -35,13 +44,87 @@ spec:
           spec:
             description: OrgNamespaceSpec defines the desired state of OrgNamespace
             properties:
-              foo:
-                description: Foo is an example field of OrgNamespace. Edit orgnamespace_types.go
-                  to remove/update
-                type: string
+              defaultResources:
+                properties:
+                  limit:
+                    properties:
+                      cpu:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      memory:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                    type: object
+                  request:
+                    properties:
+                      cpu:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      memory:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                    type: object
+                type: object
+              importSecrets:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    pullCreds:
+                      type: boolean
+                  required:
+                  - name
+                  - namespace
+                  - pullCreds
+                  type: object
+                type: array
             type: object
           status:
             description: OrgNamespaceStatus defines the observed state of OrgNamespace
+            properties:
+              conditions:
+                description: Represents the latest available observations of a namespace's
+                  current state.
+                items:
+                  description: NamespaceCondition contains details about state of
+                    namespace.
+                  properties:
+                    lastTransitionTime:
+                      format: date-time
+                      type: string
+                    message:
+                      type: string
+                    reason:
+                      type: string
+                    status:
+                      description: Status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: Type of namespace controller condition.
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+              phase:
+                description: 'Phase is the current lifecycle phase of the namespace.
+                  More info: https://kubernetes.io/docs/tasks/administer-cluster/namespaces/'
+                type: string
             type: object
         type: object
     served: true

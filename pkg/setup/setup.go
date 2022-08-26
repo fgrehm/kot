@@ -14,7 +14,7 @@ type Config struct {
 	Ctx         context.Context
 	Manager     ctrl.Manager
 	Controllers []*controller.Controller
-	// TODO: Indexers and scheme builders
+	Indexers []indexing.Indexer
 }
 
 func Run(cfg Config) {
@@ -26,6 +26,7 @@ func Run(cfg Config) {
 		idxCtrls = append(idxCtrls, c)
 	}
 	indexing.MustIndexControllers(cfg.Ctx, cfg.Manager, idxCtrls...)
+	indexing.MustIndexAll(cfg.Ctx, cfg.Manager, cfg.Indexers...)
 
 	for _, c := range cfg.Controllers {
 		c.MustComplete(ctn)

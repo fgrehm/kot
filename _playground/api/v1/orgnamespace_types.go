@@ -17,6 +17,8 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -25,21 +27,36 @@ import (
 
 // OrgNamespaceSpec defines the desired state of OrgNamespace
 type OrgNamespaceSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	ImportSecrets    []SecretRef       `json:"importSecrets,omitempty"`
+	DefaultResources *DefaultResources `json:"defaultResources,omitempty"`
+}
 
-	// Foo is an example field of OrgNamespace. Edit orgnamespace_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+type SecretRef struct {
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+	PullCreds bool   `json:"pullCreds"`
+}
+
+type DefaultResources struct {
+	Request *Resources `json:"request,omitempty"`
+	Limit   *Resources `json:"limit,omitempty"`
+}
+
+type Resources struct {
+	CPU    *resource.Quantity `json:"cpu,omitempty"`
+	Memory *resource.Quantity `json:"memory,omitempty"`
 }
 
 // OrgNamespaceStatus defines the observed state of OrgNamespace
 type OrgNamespaceStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	corev1.NamespaceStatus `json:",inline"`
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:resource:scope=Cluster,shortName=orgns
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+//+kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase"
 
 // OrgNamespace is the Schema for the orgnamespaces API
 type OrgNamespace struct {
