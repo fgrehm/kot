@@ -99,8 +99,12 @@ func (c *Controller) Prepare(ctn deps.Container) {
 func (c *Controller) buildControllerAction() action.Action {
 	actions := []action.Action{}
 
-	actions = append(actions, c.buildFinalizersAction())
-	actions = append(actions, c.buildReconcilersAction())
+	// Compose finalizers and reconcilers, just so that halting them don't result
+	// in halting status resolution
+	actions = append(actions, action.Composite(
+		c.buildFinalizersAction(),
+		c.buildReconcilersAction(),
+	))
 
 	if c.StatusResolvers != nil && len(c.StatusResolvers) > 0 {
 		actions = append(actions, reconcile.CreateStatusUpdater(c.Deps, c.StatusResolvers...))

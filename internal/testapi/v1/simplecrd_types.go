@@ -29,6 +29,7 @@ type SimpleCRDStatus struct {
 	KnownConfigMapValue *string `json:"knownConfigMapValue"`
 	KnownSecretValue    *string `json:"knownSecretValue"`
 	NamespaceAnnotation string  `json:"namespaceAnnotation"`
+	Finalizing          bool    `json:"finalizing"`
 }
 
 type SimpleCRDList struct {

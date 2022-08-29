@@ -54,6 +54,8 @@ spec:
                 type: string
               namespaceAnnotation:
                 type: string
+              finalizing:
+                type: boolean
             type: object
         type: object
 

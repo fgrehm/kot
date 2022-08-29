@@ -59,7 +59,7 @@ var (
 	Watch     = reconcile.MustCreateWatcher
 	Reconcile = reconcile.MustCreateReconciler
 
-	ListChildrenOption   = indexing.ListChildrenOption
+	ListChildrenOption = indexing.ListChildrenOption
 
 	Setup = setup.Run
 

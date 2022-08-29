@@ -120,6 +120,7 @@ var countReconciler = kot.Reconcile(&kot.Custom{
 var statusResolver = kot.ActionFn(func(ctx kot.Context) (kot.Result, error) {
 	simpleCRD := ctx.Resource().(*testapi.SimpleCRD)
 
+	simpleCRD.Status.Finalizing = simpleCRD.DeletionTimestamp != nil
 	simpleCRD.Status.StaticValue = &StaticValue
 	simpleCRD.Status.KnownConfigMapValue = simpleCRD.Spec.ConfigMapValue
 	simpleCRD.Status.KnownSecretValue = simpleCRD.Spec.SecretValue
@@ -134,6 +135,7 @@ var statusResolver = kot.ActionFn(func(ctx kot.Context) (kot.Result, error) {
 	if ns.Annotations != nil {
 		simpleCRD.Status.NamespaceAnnotation = ns.Annotations["misc"]
 	}
+
 	return kot.Result{}, nil
 })
 

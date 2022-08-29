@@ -32,7 +32,7 @@ var _ = Describe("Finalizer behavior", func() {
 				GenerateName: "parent-",
 				Namespace:    defaultNamespace,
 				Annotations: map[string]string{
-					"delay": time.Duration(2 * time.Second).String(),
+					"delay": time.Duration(2*time.Second + 100*time.Millisecond).String(),
 				},
 			},
 			Spec: testapi.SimpleCRDSpec{
@@ -80,12 +80,19 @@ var _ = Describe("Finalizer behavior", func() {
 
 		Expect(client.Delete(ctx, owner)).To(Succeed())
 
+		Eventually(func() (bool, error) {
+			if err := client.Reload(ctx, owner); err != nil {
+				return false, err
+			}
+			return owner.Status.Finalizing, nil
+		}, "1s").Should(BeTrue())
+
 		Consistently(func() ([]string, error) {
 			if err := client.Reload(ctx, owner); err != nil {
 				return nil, err
 			}
 			return owner.Finalizers, nil
-		}, "1.5s").Should(ContainElement("kot-fin"))
+		}, "1s").Should(ContainElement("kot-fin"))
 
 		Eventually(func() error {
 			return client.Reload(ctx, owner)
