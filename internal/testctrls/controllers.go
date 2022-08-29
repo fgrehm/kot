@@ -164,12 +164,46 @@ var delayFinalizer = &kot.SimpleFinalizer{
 	},
 }
 
+var garbageCollect = kot.ActionFn(func (ctx kot.Context) (kot.Result, error) {
+	simpleCRD := ctx.Resource().(*testapi.SimpleCRD)
+	if simpleCRD.DeletionTimestamp != nil {
+		return kot.Result{}, nil
+	}
+
+	gc := kot.GetAnnotation(simpleCRD, "gc")
+	if gc == "" {
+		return kot.Result{}, nil
+	}
+
+	d, err := time.ParseDuration(gc)
+	if err != nil {
+		return kot.Result{}, err
+	}
+	gcAfter := simpleCRD.CreationTimestamp.Time.Add(d)
+
+	now := time.Now()
+	if now.After(gcAfter) {
+		client := kot.ClientDep(ctx)
+		if err := client.Delete(ctx, simpleCRD); err != nil {
+			return kot.Result{}, err
+		}
+
+		// Halt because the Delete will trigger a new reconcile loop
+		return kot.Result{Halt: true}, nil
+	}
+
+	diff := gcAfter.Sub(now)
+	return kot.Result{RequeueAfter: diff + time.Second}, nil
+})
+
 var SimpleCRDController = &kot.Controller{
 	GVK: testapi.GroupVersion.WithKind("SimpleCRD"),
 
 	Watchers: kot.Watchers{
 		nsWatcher,
 	},
+
+	BeforeAll: garbageCollect,
 
 	Reconcilers: kot.Reconcilers{
 		cmReconciler,

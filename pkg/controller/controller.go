@@ -20,6 +20,7 @@ import (
 type Controller struct {
 	GVK             kotclient.GVK
 	Watchers        []reconcile.Watcher
+	BeforeAll       action.Action
 	Reconcilers     []reconcile.Reconciler
 	StatusResolvers []reconcile.StatusResolver
 	Finalizers      []reconcile.Finalizer
@@ -98,6 +99,11 @@ func (c *Controller) Prepare(ctn deps.Container) {
 
 func (c *Controller) buildControllerAction() action.Action {
 	actions := []action.Action{}
+
+	if c.BeforeAll != nil {
+		deps.SafeInject(c.Deps, c.BeforeAll)
+		actions = append(actions, c.BeforeAll)
+	}
 
 	// Compose finalizers and reconcilers, just so that halting them don't result
 	// in halting status resolution
